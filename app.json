@@ -1,0 +1,15 @@
+{
+  "name": "CeeloDicev2",
+  "displayName": "CeeloDicev2",
+  "expo": {
+    "plugins": [
+      [
+        "expo-font",
+        {
+          "fonts": ["assets/fonts/aAnotherTag.ttf"]
+        }
+      ]
+    ]
+  }
+}
+  
