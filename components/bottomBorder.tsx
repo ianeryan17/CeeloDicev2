@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Dimensions, TextInput, Button } from 'react-native';
+import { View, StyleSheet, Dimensions, TextInput } from 'react-native';
 import CustomButton from './customButton';
 
 const BottomBorder = ({ stake, updateStake, lockInBet, isEditable, waitAndRoll, isRollButtonDisabled, isLockInButtonDisabled }) => {
@@ -29,14 +29,16 @@ const BottomBorder = ({ stake, updateStake, lockInBet, isEditable, waitAndRoll, 
 const StakeBox = ({ amount, handleAmountChange, isEditable, handlePress, isLockInButtonDisabled }) => {
   return (
     <View style={styles.rectangle}>
-      <TextInput
-        style={styles.input}
-        placeholder=""
-        value={amount}
-        onChangeText={handleAmountChange}
-        keyboardType="numeric"
-        editable={!isEditable} // Set the editability based on the isLockInButtonDisabled prop
-      />
+      {/* <View style={isEditable ? styles.inputWrapper : [styles.inputWrapper, styles.nonEditableText]}> */}
+        <TextInput
+          style={[styles.input, !isEditable ? null : styles.nonEditableText]} // Apply nonEditableText style when not editable
+          placeholder=""
+          value={amount}
+          onChangeText={handleAmountChange}
+          keyboardType="numeric"
+          editable={!isEditable} // Set the editability based on the isLockInButtonDisabled prop
+        />
+      {/* </View> */}
       <CustomButton
         title="Lock In"
         onPress={handlePress}
@@ -67,9 +69,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     width: width,
-    backgroundColor: 'tan', // Background color
-    borderWidth: 10, // Border width
-    borderColor: 'brown', // Border color
+    // backgroundColor: 'tan', // Background color
+    // borderWidth: 10, // Border width
+    borderColor: 'brown', // Border colo
     justifyContent: 'center', // Center content vertically
     alignItems: 'center', // Center content horizontally
     borderBottomWidth: 0, // Remove bottom border
@@ -94,14 +96,19 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 5,
-    borderColor: 'brown',
+    borderColor: 'black',
     backgroundColor: 'white',
-    paddingHorizontal: 5,
+    paddingHorizontal: 10,
     borderRadius: 5,
     marginRight: 10,
     height: 80,
     width: 130,
-    fontSize: 40,
+    fontSize: 50,
+    fontFamily: 'aanothertag',
+    textAlign: 'right', // Additional alignment to ensure right alignment
+  },
+  nonEditableText: {
+    opacity: 0.1, // Set the opacity for non-editable text
   },
   bottomButton: {
     marginTop: 25,
@@ -125,8 +132,8 @@ const styles = StyleSheet.create({
   },
   bottomButtonText: {
     color: 'white',
-    fontSize: 30,
-    fontWeight: 'bold',
+    fontSize: 50,
+    fontFamily: 'hesorder',
   },
 });
 

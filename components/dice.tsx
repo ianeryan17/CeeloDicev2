@@ -20,7 +20,7 @@ const styles = {
         image: {
           height: 160,
           width: 160,
-          marginBottom: 100,
+          marginBottom: -40,
           marginHorizontal: 5,
         },
 };

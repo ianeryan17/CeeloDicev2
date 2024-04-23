@@ -12,12 +12,12 @@ const CustomButton = ({ title, onPress, buttonStyle, textStyle, disabled }) => (
 
 const styles = {
         enabledButton: {
-                backgroundColor: 'brown', // Adjust color for enabled state
-                borderColor: 'brown',
+                backgroundColor: 'black', // Adjust color for enabled state
+                borderColor: 'black',
                 borderWidth: 10,
         },
         disabledButton: {
-                backgroundColor: 'brown', // Adjust color for disabled state
+                backgroundColor: 'black', // Adjust color for disabled state
                 opacity: 0.5,
         },
 };

@@ -1,10 +1,8 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, TextInput, StyleSheet, ImageBackground } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, StyleSheet, ImageBackground, Animated } from 'react-native';
+import Sound from 'react-native-sound';
 import Dice from './components/dice';
-import GameButtons from './components/gameButtons';
-import RollButton from './components/rollButton';
 import { BottomBorder } from './components/bottomBorder';
-import { useFont } from './fontHelper';
 
 import face1 from './assets/1_dot.png';
 import face2 from './assets/2_dots.png';
@@ -15,9 +13,7 @@ import face6 from './assets/6_dots.png';
 
 const App = () => {
   const [money, setMoney] = useState(500); // State variable to hold the value of money
-  const [stake, setStake] = useState(0); // State variable to hold the value of money
-  const [temp, setTemp] = useState(0); // State variable to hold the value of money
-  const [isResetButtonDisabled, setIsResetButtonDisabled] = useState(true);
+  const [stake, setStake] = useState(""); // State variable to hold the value of money
   const [isLockInButtonDisabled, setIsLockInButtonDisabled] = useState(true);
   const [isRollButtonDisabled, setIsRollButtonDisabled] = useState(true);
   const [playerSetValue, setPlayerSetValue] = useState(0);
@@ -26,80 +22,138 @@ const App = () => {
   const diceNumbers = [1, 2, 3, 4, 5, 6];
   const [message, setMessage] = useState('');
   const [isEditable, setIsEditable] = useState(true);
+  const [color, setColor] = useState('black'); // Initialize color state with 'black'
+  const [animation, setAnimation] = useState(new Animated.Value(0));
+
+
+/* SOUND IMPORTS */
+  var cashSound = new Sound('coin_sound.mp3', Sound.MAIN_BUNDLE, (error) => {
+    if (error) {
+      console.log('failed to load the sound', error);
+      return;
+    }
+  });
+  cashSound.setVolume(1);
+
+  var diceSound = new Sound('dice_roll.mp3', Sound.MAIN_BUNDLE, (error) => {
+    if (error) {
+      console.log('failed to load the sound', error);
+      return;
+    }
+  });  
+  diceSound.setVolume(1);
+
+  var buttonSound = new Sound('bloop1.mp3', Sound.MAIN_BUNDLE, (error) => {
+    if (error) {
+      console.log('failed to load the sound', error);
+      return;
+    }
+  });
+  buttonSound.setVolume(1);
+
+  var failSound = new Sound('fail_sound2.mp3', Sound.MAIN_BUNDLE, (error) => {
+    if (error) {
+      console.log('failed to load the sound', error);
+      return;
+    }
+  });
+  failSound.setVolume(1);
+
+  
 
   /* BUTTON FUNCTIONS */  
   const updateMoney = (newMoney) => {
+    console.log("stake: ", stake);
     const newMoneyNumeric = parseInt(newMoney); // Convert string to numeric value
     if ((money + newMoneyNumeric) === 0){
-      console.log("Player has run out of money. Time to go home and explain to the wife where your kid's college savings went.\n");
-      showMessage("Player has run out of money. Time to go home and explain to the wife where your kid's college savings went.", 2000);
-      return;
+      showMessageWithAnimation("Player has run out of money.");
+      showMessageWithAnimation("Time to go home and explain to the wife where your kid's college savings went.");
     }
-    console.log("updateMoney from: " + money + ", adding " + newMoneyNumeric + ", result: " + (money + newMoney));
+    console.log("updateMoney from: " + money + ", adding " + newMoneyNumeric + ", result: " + (Number(money) + Number(newMoney)));
     setMoney(money + newMoneyNumeric); // Update the state variable with the new amount
+    setTimeout(() => {
+      setTextColor('black');
+    }, 750);
   };
-  const updateTemp = (newStake) => {
-    console.log("updating");
-    if (newStake === 0 || !newStake ) {
-      setIsLockInButtonDisabled(true);
-      console.log("Stake removed, lockIn button locked");
-      setTemp(newStake); // Update the state variable with the new amount
-      return;
-    }
-    if (isNaN(newStake)){
-      console.log("Gotta bet numbers.");
-      return;
-    }
-    if (newStake > 0) {
-      setIsLockInButtonDisabled(false);
-      console.log("Stake placed, lockIn button unlocked");
-    }
-    if ((newStake) > money){
-      console.log("Can't bet more than your bank account allows buddy");
-      return;
-    }
-    setTemp(newStake); // Update the state variable with the new amount
-  }
+
   const updateStake = (newStake) => {
-    if (isNaN(newStake)){
-      console.log("Gotta bet numbers.");
-      return;
-    }
-    if ((newStake) > money){
-      console.log("Can't bet more than your bank account allows buddy");
-      return;
-    }
-    console.log("updateStake from: " + stake + ", adding " + newStake + ", result: " + (stake + newStake));
-    setStake(newStake); // Update the state variable with the new amount
+    console.log("newStake: ", newStake);
+      if (isNaN(newStake)){
+        console.log("Gotta bet numbers.");
+        return;
+      }
+      if ((newStake) > money){
+        console.log("Can't bet more than your bank account allows buddy");
+        return;
+      }
+      if ((newStake.length) > 5){
+        console.log("number is too long");
+        return;
+      }
+      if ((newStake) < 1){
+        console.log("lock in disabled as stake = 0");
+        setIsLockInButtonDisabled(true);
+        setStake(newStake); // Update the state variable with the new amount
+        return;
+      }
+      setStake(newStake); // Update the state variable with the new amount
+      setIsLockInButtonDisabled(false);
   };
+
   const resetStake = () => {
     console.log("resetStake from: " + stake + ", to " + 0);
-    setStake(0);
+    setStake("");
     setIsLockInButtonDisabled(true);
   };
+
   const lockInBet = () => {
-    updateStake(temp);
-    updateTemp("");
-    console.log("lock in bet pressed");
+    buttonSound.play((success) => {
+      if (!success) {
+        console.log('failed to play the sound');
+      }
+    });
     setIsLockInButtonDisabled(true);
     setIsEditable(false);
-    showMessage("The bet is placed, the banker now rolls to start the game.", 1000);
-    setTimeout(rollAnimation, 1500, false);
+    setTimeout(rollAnimation, 500, false);
   };
 
   /* MESSAGE FUNCTIONS */
-  const showMessage = (text, duration) => {
-    console.log("showing message: ", text);
+  // Function to show message with animation
+  const showMessageWithAnimation = (text) => {
     setMessage(text);
 
+    // Fade in and scale up animation
+    Animated.timing(animation, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+
+    // Hide message after 2 seconds
     setTimeout(() => {
+      hideMessage();
+    }, 2000);
+  };
+
+  // Function to hide message
+  const hideMessage = () => {
+    // Fade out and scale down animation
+    Animated.timing(animation, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
       setMessage('');
-    }, duration);
+    });
+  };
+
+  const setTextColor = (newColor) => {
+    console.log("setting new color to be ", newColor);
+    setColor(newColor);
   };
 
   /* ROLLING FUNCTIONS */
   const updateDiceFaces = (die1, die2, die3) => {
-    console.log("updating die faces to: ", die1, " ", die2, " ", die3,);
     setDiceFaces(prevDiceFaces => [getFaceImage(die1), getFaceImage(die2), getFaceImage(die3)]);
   };
 
@@ -128,21 +182,24 @@ const App = () => {
     let die2 = getRandomNumber();
     let die3 = getRandomNumber();
     updateDiceFaces(die1, die2, die3);
-  }
+  };
 
   const rollAnimation = (isUserTurn) => {
-    console.log("rollAnimation called");
+    diceSound.play((success) => {
+      if (!success) {
+        console.log('failed to play the sound');
+      }
+    });
     let intervalID = setInterval(generateFaces, 100);
-    setTimeout(clearInterval, 2000, intervalID);
-    setTimeout(roll, 1000, isUserTurn);
+    setTimeout(clearInterval, 1500, intervalID);
+    setTimeout(roll, 500, isUserTurn);
     setIsRollButtonDisabled(true); // Disable the roll button during the rolling process
-  }
+  };
 
   /*
                                 DICE ROLL GENERATION
                                                                              */
   const roll = (isUserTurn) => {
-    console.log("rolling now");
     let die1 = getRandomNumber();
     let die2 = getRandomNumber();
     let die3 = getRandomNumber();
@@ -158,17 +215,26 @@ const App = () => {
       diceNumbers[5] = die3;
     }
     
+    console.log("final combination: ", die1, " ", die2, " ", die3);
+
     combinationCheck(isUserTurn);
   };
 
-  const waitAndRoll = () => {
+  const rollClick = () => {
+    console.log("played sound");
+    buttonSound.play((success) => {
+      if (!success) {
+        console.log('failed to play the sound');
+      } else{
+        console.log("PLAYED THE SOUND");
+      }
+    });
     setTimeout(rollAnimation, 0, true);
-  }
+  };
 
   const getRandomNumber = () => {
     const randomDecimal = Math.random();
     const randomNumber = 1 + Math.floor(randomDecimal * (6));
-  
     return randomNumber;
 }
 
@@ -181,7 +247,7 @@ const combinationCheck = (diceIndex) => {
   } else {
     bankerHelper(diceNumbers[3], diceNumbers[4], diceNumbers[5]);
   }
-}
+};
 
 const combinationHelper = (die1, die2, die3) => {
   if (
@@ -213,7 +279,7 @@ const combinationHelper = (die1, die2, die3) => {
   } else { //reroll case, no recognized combination found
     setTimeout(playerReroll, 2000);
   }
-}
+};
 
 const bankerHelper = (die1, die2, die3) => {
   if (
@@ -247,33 +313,31 @@ const bankerHelper = (die1, die2, die3) => {
       (die1 === 3 && die2 === 1 && die3 === 2)
   ) { // auto lose case
     console.log("auto lose case");
-    setTimeout(bankerAutoLoss, 2000);
+    setTimeout(bankerAutoLoss, 1500);
+    console.log("stake on bankerAutoLoss: ", stake);
   } else { // reroll case, no recognized combination found
     console.log("reroll case");
-    setTimeout(bankerReroll, 2000);
+    setTimeout(bankerReroll, 1500);
   }
-}
+};
 
 /*
                               RESULT STATES
                                                                            */
 const playerAutoWin = () => {
-  console.log("Player auto-won!\n");
-  showMessage("Player auto-won!", 2000);
-  setTimeout(playerWin, 2000);
-}
+  showMessageWithAnimation("Player auto-won!");
+  playerWin();
+};
     
 const playerAutoLoss = () => {
-  console.log("Player auto-lost!\n");
-  showMessage("Player auto-lost!", 2000);
+  showMessageWithAnimation("Player auto-lost!");
   playerLose();
-}
+};
     
 const playerReroll = () => {
-  console.log("Player reroll!");
-  showMessage("Player reroll!", 1500);
+  showMessageWithAnimation("Player reroll!");
   setIsRollButtonDisabled(false);
-}
+};
     
 const playerSet = (setValue) => {
   console.log("player set value is: " + setValue + "\n");
@@ -285,55 +349,49 @@ const playerSet = (setValue) => {
     setPlayerSetValue(setValue);
     setTimeout(determineWinner, 0);
   }
-}
+};
 
 const bankerAutoWin = () => {
-  console.log("Banker auto-won!\n");
-  showMessage("Banker auto-won!", 2000);
+  showMessageWithAnimation("Banker auto-won!");
   playerLose();
-}
+};
     
 const bankerAutoLoss = () => {
-  console.log("Banker auto-lost!\n");
-  showMessage("Banker auto-lost!", 2000);
+  showMessageWithAnimation("Banker auto-lost!");
   playerWin();
-}
+};
     
 const bankerReroll = () => {
-  console.log("Banker reroll!\n");
-  showMessage("Banker reroll!", 2000);
+  showMessageWithAnimation("Banker reroll!");
   setTimeout(rollAnimation, 1500, false);
-}
+};
     
 const bankerSet = (setValue) => {
-  showMessage("Banker set value is: " + setValue, 1500);
+  showMessageWithAnimation("Banker set value is: " + setValue);
   if (setValue === 6) {
-    setTimeout(playerAutoLoss, 1000);
+    setTimeout(playerAutoLoss, 1500);
   } else if (setValue === 1) {
-    // setTimeout(showMessage, 2000, "banker set value is: " + setValue, 2000);
-    setTimeout(playerAutoWin, 2000);
+    setTimeout(playerAutoWin, 1500);
   } else {
-    // setTimeout(showMessage, 1500, "The player must roll a higher set, or auto win.", 2000);
     setBankerSetValue(setValue);
-    setTimeout(showMessage, 1500, "Your turn to roll!", 1500);
+    setTimeout(showMessageWithAnimation, 1500, "Your turn to roll!");
     setIsRollButtonDisabled(false);
   }
-}
+};
 
 const determineWinner = () => {
     console.log("Determining winner, player set: ", playerSetValue, " banker set: ", bankerSetValue);
   if (playerSetValue > bankerSetValue) { //player has higher set value
-    showMessage("Player has higher set value.", 2000);
-    setTimeout(showMessage, 1500, "Player wins!", 2000);
+    showMessageWithAnimation("Player has higher set value.");
+    setTimeout(showMessageWithAnimation, 1000, "Player wins!");
     playerWin();
   } else if (playerSetValue < bankerSetValue) { //banker has higher set value
-    setTimeout(showMessage, 0, "Banker has higher set value.", 1500);
-    setTimeout(showMessage, 1500, "Player loses!", 2000);
+    showMessageWithAnimation("Banker has higher set value.");
+    setTimeout(showMessageWithAnimation, 1000, "Player loses!");
     playerLose();
   } else { //tie case
-    showMessage("Player and Banker have equal set value.", 1500);
-    // setTimeout(showMessage, 0, "It's a push!", 2000);
-    setTimeout(showMessage, 1500, "Player recieves initial stake.", 2000);
+    showMessageWithAnimation("It's a push!", 1000);
+    setTimeout(showMessageWithAnimation, 1000, "Player recieves initial stake.");
     resetStake();
     console.log("Bank Amount: " + money);
     updateMoney(0);
@@ -341,58 +399,85 @@ const determineWinner = () => {
     setIsLockInButtonDisabled(true);
     setIsEditable(true);
   }
-}
+};
 
-/*
-                            FINAL RESULT FOR PLAYER
-                                                                             */
+/* FINAL RESULT FOR PLAYER */
 const playerWin = () => {
-  const oldMoney = money;
-  updateMoney(stake);
+  setTextColor('green');
+  cashSound.play((success) => {
+    if (!success) {
+      console.log('failed to play the sound');
+    } else{
+      console.log("PLAYED THE SOUND");
+    }
+  });
+  setTimeout(updateMoney, 750, parseInt(stake));
   resetStake();
   setIsLockInButtonDisabled(true);
   setIsEditable(true);
   setIsRollButtonDisabled(true);
-}
+};
 
 const playerLose = () => {
-  const oldMoney = money;
-  updateMoney(-1 * stake);
+  setTextColor('red');
+  failSound.play((success) => {
+    if (!success) {
+      console.log('failed to play the sound');
+    }
+  });
+  setTimeout(updateMoney, 750, (parseInt(stake) * -1));
   resetStake();
   setIsLockInButtonDisabled(true);
   setIsEditable(true);
   setIsRollButtonDisabled(true);
-}
+};
 
   return ( //Image background may need to replace styles.container line
     <ImageBackground source={require('./assets/concrete.png')} style={styles.container}>
 
       {/* Text inputs in the top left and right corners */}
       <View style={styles.textInputContainerLeft}>
+        <Text style={styles.customFont}>Money = </Text>
         <TextInput
-          style={styles.textInput}
-          placeholder="Money: 500"
+          style={[styles.customFont, { color }]} // Apply dynamic color style
+          placeholder="500"
           placeholderTextColor="black"
-          value={`Money: ${money}`} // Display the money value with the label
+          value={`${money}`} // Display the money value directly without any space or newline
           editable={false} // Make the TextInput non-editable
         />
       </View>
       <View style={styles.textInputContainerRight}>
         <TextInput
-          style={styles.textInput}
-          placeholder="Stake: 0"
+          style={styles.customFont2}
+          placeholder="Stake = 0"
           placeholderTextColor="black"
-          value={`Stake: ${stake}`} // Display the money value with the label
+          value={`Stake = ${stake}`} // Display the money value with the label
           editable={false} // Make the TextInput non-editable
         />
       </View>
 
       {/* Messages */}
       {/* {message !== '' && ( */}
-        <Text 
+        {/* <Text 
           style={styles.message}>
           {message}
-        </Text>
+        </Text> */}
+
+      {message !== '' && (
+        <Animated.View
+          style={{
+            position: 'absolute',
+            top: 20,
+            left: 0,
+            right: 0,
+            alignItems: 'center',
+            opacity: animation,
+            transform: [{ scale: animation }],
+          }}
+        >
+          <Text style={styles.message}>{message}</Text>
+        </Animated.View>
+      )}
       {/* )} */}
 
       {/* Dice */}
@@ -402,27 +487,14 @@ const playerLose = () => {
 
       {/* Bottom Border */}
       <BottomBorder
-        stake={temp}
-        updateStake={updateTemp}
+        stake={stake}
+        updateStake={updateStake}
         lockInBet={lockInBet}
-        waitAndRoll={waitAndRoll}
+        waitAndRoll={rollClick}
         isRollButtonDisabled={isRollButtonDisabled}
         isLockInButtonDisabled={isLockInButtonDisabled}
         isEditable={isEditable}
       />
-
-      {/* Buttons */}
-      {/* <GameButtons
-        lockInBet={lockInBet}
-        resetStake={resetStake}
-        isLockInButtonDisabled={isLockInButtonDisabled}
-        isResetButtonDisabled={isResetButtonDisabled}
-      />
-
-      <RollButton 
-        waitAndRoll={waitAndRoll} 
-        isRollButtonDisabled={isRollButtonDisabled} 
-      /> */}
     </ImageBackground>  
   );
 };
@@ -435,57 +507,58 @@ const styles = StyleSheet.create({
   },
   textInputContainerLeft: {
     position: 'absolute',
+    alignItems: 'center', // Center elements vertically
+    flexDirection: 'row', // Align elements horizontally
     top: 0,
     left: 0,
     margin: 10,
-    backgroundColor: 'white',
-    borderRadius: 20, // Optional: Add border radius for rounded corners
-    paddingHorizontal: 0, // Optional: Add padding for better appearance
-    overflow: 'hidden', // Ensure that the circular container clips any overflowing content
-  },
+    },
   textInputContainerRight: {
     position: 'absolute',
     top: 0,
     right: 0,
     margin: 10,
-    backgroundColor: 'white',
-    borderRadius: 20, // Optional: Add border radius for rounded corners
-    paddingHorizontal: 0, // Optional: Add padding for better appearance
-    overflow: 'hidden', // Ensure that the circular container clips any overflowing content
   },
-  textInput: {
-    position: 'relative',
-    borderWidth: 3,
-    borderColor: 'black',
-    fontWeight: 'bold',
-    color: 'black',
-    fontSize: 40, // Decreased font size to fit more buttons horizontally
-    padding: 10,
-    borderRadius: 20, // Optional: Add border radius for rounded corners
-    width: 250,
-    height: 100,
-    fontFamily: 'Graffiti',
-  },
+  // textInput: {
+  //   position: 'relative',
+  //   borderWidth: 3,
+  //   borderColor: 'black',
+  //   fontWeight: 'bold',
+  //   color: 'black',
+  //   fontSize: 40, // Decreased font size to fit more buttons horizontally
+  //   padding: 10,
+  //   borderRadius: 20, // Optional: Add border radius for rounded corners
+  //   width: 250,
+  //   height: 100,
+  //   fontFamily: 'Lobster-Regular',
+  // },
   horizontalButtons: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginTop: -100,
   },
   message: {
-    fontSize: 40,
-    fontWeight: 'bold',
+    fontSize: 60,
     color: 'black',
-    backgroundColor: 'white',
     marginTop: 100, // Adjust as needed
-    marginBottom: 50, 
+    marginBottom: 60, 
     textAlign: 'center', // Center the text
     zIndex: 2, // Ensure text is above the image
     borderRadius: 10,
     marginLeft: 20,
     marginRight: 20,
-    // padding: 10,
+    fontFamily: 'hesorder'
   },
-  
+  customFont: {
+    fontFamily: 'aanothertag',
+    fontSize: 80,
+    color: 'black',
+  },
+  customFont2: {
+    fontFamily: 'aanothertag',
+    fontSize: 80,
+    color: 'black',
+  },
 });
 
 export default App;
