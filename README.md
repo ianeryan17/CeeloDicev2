@@ -1,7 +1,7 @@
 # 🎲 CeeloDice v2 (React Native Version)
 
-> A mobile dice game based on the street game _Cee-lo_, built with **React Native** and **TypeScript**.
-> I designed and developed this game as an effort to adapt Ceelo Dice into a video game. As part of this process, I developed the game in a variety of different languages, starting in C# on Unity, before writing the game in both React Native and React.
+A mobile dice game based on the street game _Cee-lo_, built with **React Native** and **TypeScript**.
+I designed and developed this game as an effort to adapt Ceelo Dice into a video game. As part of this process, I developed the game in a variety of different languages, starting in C# on Unity, before writing the game in both React Native and React.
 
 ---
 
@@ -56,6 +56,8 @@ npm start
 
 ### Run the App
 
+```bash
 npm run android
+```
 
 </details>
