@@ -26,7 +26,8 @@ A mobile dice game based on the street game _Cee-lo_, built with **React Native*
 
 ## 📸 Screenshots
 
-(Add 1–2 screenshots or gifs here if possible!)
+![Gameplay Screenshot](docs/opening_screen.png)
+![Gameplay Screenshot2](docs/play_screenshot.png)
 
 ---
 
