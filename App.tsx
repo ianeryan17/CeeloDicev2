@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, ImageBackground, Animated } from 'react-native';
 import Sound from 'react-native-sound';
 import Dice from './components/dice';
@@ -16,8 +16,8 @@ const App = () => {
   const [stake, setStake] = useState(""); // State variable to hold the value of money
   const [isLockInButtonDisabled, setIsLockInButtonDisabled] = useState(true);
   const [isRollButtonDisabled, setIsRollButtonDisabled] = useState(true);
-  const [playerSetValue, setPlayerSetValue] = useState(0);
-  const [bankerSetValue, setBankerSetValue] = useState(0);
+  const [playerSetValue, setPlayerSetValue] = useState(1);
+  const [bankerSetValue, setBankerSetValue] = useState(1);
   const [diceFaces, setDiceFaces] = useState([face1, face1, face1]);
   const diceNumbers = [1, 2, 3, 4, 5, 6];
   const [message, setMessage] = useState('');
@@ -29,7 +29,7 @@ const App = () => {
 /* SOUND IMPORTS */
   var cashSound = new Sound('coin_sound.mp3', Sound.MAIN_BUNDLE, (error) => {
     if (error) {
-      console.log('failed to load the sound', error);
+      console.log('failed to load the cash sound', error);
       return;
     }
   });
@@ -37,7 +37,7 @@ const App = () => {
 
   var diceSound = new Sound('dice_roll.mp3', Sound.MAIN_BUNDLE, (error) => {
     if (error) {
-      console.log('failed to load the sound', error);
+      console.log('failed to load the dice sound', error);
       return;
     }
   });  
@@ -45,7 +45,7 @@ const App = () => {
 
   var buttonSound = new Sound('bloop1.mp3', Sound.MAIN_BUNDLE, (error) => {
     if (error) {
-      console.log('failed to load the sound', error);
+      console.log('failed to load the button sound', error);
       return;
     }
   });
@@ -53,7 +53,7 @@ const App = () => {
 
   var failSound = new Sound('fail_sound2.mp3', Sound.MAIN_BUNDLE, (error) => {
     if (error) {
-      console.log('failed to load the sound', error);
+      console.log('failed to load the fail sound', error);
       return;
     }
   });
@@ -67,7 +67,7 @@ const App = () => {
     const newMoneyNumeric = parseInt(newMoney); // Convert string to numeric value
     if ((money + newMoneyNumeric) === 0){
       showMessageWithAnimation("Player has run out of money.");
-      showMessageWithAnimation("Time to go home and explain to the wife where your kid's college savings went.");
+      setTimeout(showMessageWithAnimation, 2000, "Time to go home and explain to the wife where your kid's college savings went.");
     }
     console.log("updateMoney from: " + money + ", adding " + newMoneyNumeric + ", result: " + (Number(money) + Number(newMoney)));
     setMoney(money + newMoneyNumeric); // Update the state variable with the new amount
@@ -225,7 +225,7 @@ const App = () => {
     buttonSound.play((success) => {
       if (!success) {
         console.log('failed to play the sound');
-      } else{
+      } else {
         console.log("PLAYED THE SOUND");
       }
     });
@@ -262,10 +262,13 @@ const combinationHelper = (die1, die2, die3) => {
   } else if (die1 === die2 && die2 === die3 && die1 === die3) { //triple case
     setTimeout(playerAutoWin, 2000);
   } else if (die1 === die2 && die1 !== die3) { //die3 set point case
+    console.log("die3 set case, die3 = ", die3);
     setTimeout(playerSet, 2000, die3);
   } else if (die1 === die3 && die1 !== die2) { //die2 set point case
+    console.log("die2 set case, die2 = ", die2);
     setTimeout(playerSet, 2000, die2);
   } else if (die2 === die3 && die1 !== die2) { //die1 set point case
+    console.log("die1 set case, die3 = ", die1);
     setTimeout(playerSet, 2000, die1);
   } else if (
       (die1 === 1 && die2 === 2 && die3 === 3) ||
@@ -314,7 +317,6 @@ const bankerHelper = (die1, die2, die3) => {
   ) { // auto lose case
     console.log("auto lose case");
     setTimeout(bankerAutoLoss, 1500);
-    console.log("stake on bankerAutoLoss: ", stake);
   } else { // reroll case, no recognized combination found
     console.log("reroll case");
     setTimeout(bankerReroll, 1500);
@@ -340,16 +342,21 @@ const playerReroll = () => {
 };
     
 const playerSet = (setValue) => {
-  console.log("player set value is: " + setValue + "\n");
-  if (setValue === 6) {
+  console.log("playerSet func, player set value is: " + setValue + "\n");
+  let tempValue = setValue;
+  if (tempValue === 6) {
     playerAutoWin();
-  } else if (setValue === 1) {
+  } else if (tempValue === 1) {
     playerAutoLoss();
   } else {
     setPlayerSetValue(setValue);
-    setTimeout(determineWinner, 0);
   }
 };
+
+useEffect(() => {
+  // This code will run whenever playerSetValue changes
+  determineWinner();
+}, [playerSetValue]);
 
 const bankerAutoWin = () => {
   showMessageWithAnimation("Banker auto-won!");
@@ -390,8 +397,8 @@ const determineWinner = () => {
     setTimeout(showMessageWithAnimation, 1000, "Player loses!");
     playerLose();
   } else { //tie case
-    showMessageWithAnimation("It's a push!", 1000);
-    setTimeout(showMessageWithAnimation, 1000, "Player recieves initial stake.");
+    // showMessageWithAnimation("It's a push!");
+    // setTimeout(showMessageWithAnimation, 1000, "Player recieves initial stake.");
     resetStake();
     console.log("Bank Amount: " + money);
     updateMoney(0);
@@ -403,6 +410,7 @@ const determineWinner = () => {
 
 /* FINAL RESULT FOR PLAYER */
 const playerWin = () => {
+  console.log("playerWin func, player set value is: " + playerSetValue + "\n");
   setTextColor('green');
   cashSound.play((success) => {
     if (!success) {
@@ -419,6 +427,7 @@ const playerWin = () => {
 };
 
 const playerLose = () => {
+  console.log("playerLose func, player set value is: " + playerSetValue + "\n");
   setTextColor('red');
   failSound.play((success) => {
     if (!success) {
